@@ -7,39 +7,24 @@ const Tareas = () => {
 	const [task, setTask] = useState(initialState);
 	const [list, setList] = useState([]);
 	const [error, setError] = useState(false);
-	const [user, setUser] = useState("");
+	const user = localStorage.getItem("user") || "";
 	let URL_BASE = "https://assets.breatheco.de/apis/fake/todos/user/";
 
 	let getApi = async () => {
 		try {
-			let response = await fetch(`${URL_BASE}${user}`);
+			let response = await fetch(`${URL_BASE}josemi19`);
 			let data = await response.json();
 			setList(data);
 			console.log(list);
 		} catch (error) {}
 	};
 
-	let createUser = async () => {
-		try {
-			let response = await fetch(`${URL_BASE}${user}`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify([]),
-			});
-			if (response.ok) {
-				getApi();
-			}
-			console.log(response.status);
-		} catch (error) {
-			console.log(error);
-		}
-	};
-
 	let addListApi = async () => {
+		if (task.label.trim() == "") {
+			setError(true);
+		}
 		try {
-			let response = await fetch(`${URL_BASE}${user}`, {
+			let response = await fetch(`${URL_BASE}josemi19`, {
 				method: "PUT",
 				headers: {
 					"Content-Type": "application/json",
@@ -48,6 +33,7 @@ const Tareas = () => {
 			});
 			if (response.ok) {
 				getApi();
+				setTask({ ...task, ["label"]: "" });
 			} else {
 				console.log(response.status);
 			}
@@ -56,14 +42,36 @@ const Tareas = () => {
 		}
 	};
 
+	let createUser = async () => {
+		try {
+			let response = await fetch(`${URL_BASE}josemi19`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify([]),
+			});
+			if (response.ok) {
+				localStorage.setItem("user", JSON.stringify("josemi19"));
+				getApi();
+			}
+			console.log(response.status);
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
 	let deleteUser = async () => {
 		try {
-			let response = await fetch(`${URL_BASE}${user}`, {
+			let response = await fetch(`${URL_BASE}josemi19`, {
 				method: "DELETE",
 				headers: {
 					"Content-Type": "application/json",
 				},
 			});
+			if (response.ok) {
+				localStorage.removeItem("user");
+			}
 		} catch (error) {
 			console.log(error);
 		}
@@ -73,16 +81,6 @@ const Tareas = () => {
 		setTask({ ...task, [event.target.name]: event.target.value });
 	};
 
-	// const addTask = () => {
-	// 	if (task.trim() == "") {
-	// 		setError(true);
-	// 	} else {
-	// 		setList([...list, task]);
-	// 		setTask("");
-	// 		setError(false);
-	// 	}
-	// };
-
 	const borrarTask = (id) => {
 		let newList = list.filter((item, index) => index != id);
 		setList(newList);
@@ -90,15 +88,23 @@ const Tareas = () => {
 
 	const handleKey = (event) => {
 		if (event.key === "Enter") {
-			if (task.trim() == "") {
+			if (task.label.trim() == "") {
 				setError(true);
 			} else {
 				setList([...list, task]);
-				setTask("");
+				setTask({ ...task, ["label"]: "" });
 				setError(false);
 			}
 		}
 	};
+
+	useEffect(() => {
+		if (user == "") {
+			createUser();
+		} else {
+			getApi();
+		}
+	}, []);
 
 	return (
 		<>
@@ -106,34 +112,6 @@ const Tareas = () => {
 				<div className="col-6 col-md-8">
 					<div className="card text-dark bg-light">
 						<div className="input-group card-header">
-							<div className="input-group d-flex align-items-center m-2">
-								<input
-									type="text"
-									className="form-control bg-light userEntry"
-									placeholder="Nombre de usuario"
-									aria-describedby="button-addon2"
-									value={user}
-									onChange={(event) => {
-										setUser(event.target.value);
-									}}
-								/>
-								<button
-									type="button"
-									className="btn btn-primary m-2 "
-									onClick={() => {
-										createUser();
-									}}>
-									Crear Usuario
-								</button>
-								<button
-									type="button"
-									className="btn btn-danger m-2 "
-									onClick={() => {
-										deleteUser();
-									}}>
-									Borrar Usuario
-								</button>
-							</div>
 							<div className="input-group">
 								<input
 									type="text"
@@ -188,6 +166,14 @@ const Tareas = () => {
 									getApi();
 								}}>
 								Traer tareas guardadas
+							</button>
+							<button
+								type="button"
+								className="btn btn-danger mt-2 ms-1"
+								onClick={() => {
+									deleteUser();
+								}}>
+								Borrar Todo
 							</button>
 						</div>
 					</div>
